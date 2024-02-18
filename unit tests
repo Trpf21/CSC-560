@@ -1,0 +1,183 @@
+//index.js
+//import body parser
+let bodyParser = require('body-parser');
+//import mongoose
+let mongoose = require('mongoose');
+//configure bodyparser to hande the post requests
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+//connect to mongoose
+const dbPath = 'mongodb://localhost/firstrest';
+const options = {useNewUrlParser: true, useUnifiedTopology: true}
+const mongo = mongoose.connect(dbPath, options);
+mongo.then(() => {
+    console.log('connected');
+}, error => {
+    console.log(error, 'error');
+})
+//index.js
+let express = require('express')
+let app = express();
+var port = process.env.PORT || 8080;
+// Welcome message
+app.get('/', (req, res) => res.send('Welcome to Express'));
+// Launch app to the specified port
+app.listen(port, function() {
+    console.log("Running FirstRest on Port "+ port);
+})
+//Import routes
+let apiRoutes = require("./routes")
+//Use API routes in the App
+app.use('/api', apiRoutes)
+//import body parser
+let bodyParser = require('body-parser');
+//import mongoose
+let mongoose = require('mongoose');
+//configure bodyparser to hande the post requests
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+//connect to mongoose
+const dbPath = 'mongodb://localhost/firstrest';
+const options = {useNewUrlParser: true, useUnifiedTopology: true}
+const mongo = mongoose.connect(dbPath, options);
+mongo.then(() => {
+    console.log('connected');
+}, error => {
+    console.log(error, 'error');
+})
+//bioModel.js
+var mongoose = require('mongoose');
+//schema
+var bioSchema = mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true
+    },
+    phone: {
+        type: String,
+        required: true
+    },
+    address: {
+        type: String,
+        required: true
+    },
+    created_at: {
+        type: Date,
+        default: Date.now
+    }
+});
+// Export Bio Model
+var Bio = module.exports = mongoose.model('bio', bioSchema);
+module.exports.get = function (callback, limit) {
+   Bio.find(callback).limit(limit); 
+}
+//routes.js
+//initialize express router
+let router = require('express').Router();
+//set default API response
+router.get('/', function(req, res) {
+    res.json({
+        status: 'API Works',
+        message: 'Welcome to FirstRest API'
+    });
+});
+//Import Bio Controller
+var bioController = require('./bioController');
+// Bio routes
+router.route('/bio')
+    .get(bioController.index)
+    .post(bioController.add);
+router.route('/bio/:bio_id')
+    .get(bioController.view)
+    .patch(bioController.update)
+    .put(bioController.update)
+    .delete(bioController.delete);
+//Export API routes
+module.exports = router;
+//bioController.js
+//Import Bio Model
+Bio = require('./bioModel');
+//For index
+exports.index = function (req, res) {
+    Bio.get(function (err, bio) {
+        if (err)
+            res.json({
+                status: "error",
+                message: err
+            });
+        res.json({
+            status: "success",
+            message: "Got Bio Successfully!",
+            data: bio       
+        });
+    });
+};
+//For creating new bio
+exports.add = function (req, res) {
+    var bio = new Bio();
+    bio.name = req.body.name? req.body.name: bio.name;
+    bio.email = req.body.email;
+    bio.phone = req.body.phone;
+    bio.address = req.body.address;
+//Save and check error
+    bio.save(function (err) {
+        if (err)
+            res.json(err);
+res.json({
+            message: "New Bio Added!",
+            data: bio
+        });
+    });
+};
+// View Bio
+exports.view = function (req, res) {
+    Bio.findById(req.params.bio_id, function (err, bio) {
+        if (err)
+            res.send(err);
+        res.json({
+            message: 'Bio Details',
+            data: bio
+        });
+    });
+};
+// Update Bio
+exports.update = function (req, res) {
+    Bio.findById(req.params.bio_id, function (err, bio) {
+        if (err)
+            res.send(err);
+        bio.name = req.body.name ? req.body.name : bio.name;
+        bio.email = req.body.email;
+        bio.phone = req.body.phone;
+        bio.address = req.body.address;
+//save and check errors
+        bio.save(function (err) {
+            if (err)
+                res.json(err)
+            res.json({
+                message: "Bio Updated Successfully",
+                data: bio
+            });
+        });
+    });
+};
+// Delete Bio
+exports.delete = function (req, res) {
+    Bio.deleteOne({
+        _id: req.params.bio_id
+    }, function (err, contact) {
+        if (err)
+            res.send(err)
+        res.json({
+            status: "success",
+            message: 'Bio Deleted'
+        })
+    })
+}
